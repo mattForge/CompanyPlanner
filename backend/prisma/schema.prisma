@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  GLOBAL_ADMIN
+  COMPANY_ADMIN
+  EXEC
+  HR
+  MEMBER
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  teams     Team[]
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  users       User[]
+  createdAt   DateTime @default(now())
+}
+
+model User {
+  id          String      @id @default(uuid())
+  email       String      @unique
+  password    String
+  role        Role        @default(MEMBER)
+  companyId   String?
+  teamId      String?
+  firstName   String?
+  lastName    String?
+  clockIns    ClockIn[]
+  company     Company?    @relation(fields: [companyId], references: [id])
+  team        Team?       @relation(fields: [teamId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  teamId      String
+  assignedTo  String[]
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ClockIn {
+  id        String   @id @default(uuid())
+  userId    String
+  clockIn   DateTime
+  clockOut  DateTime?
+  notes     String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+}
